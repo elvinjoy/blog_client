@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import {
   AppBar,
-  Avatar,
   Box,
   CssBaseline,
   Divider,
@@ -16,6 +16,7 @@ import {
   Typography,
   Paper,
   Grid,
+  CircularProgress,
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -25,6 +26,25 @@ import SettingsIcon from '@mui/icons-material/Settings';
 const drawerWidth = 240;
 
 const Dashboard = () => {
+  const [blogs, setBlogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch blogs from the API
+  const fetchBlogs = async () => {
+    try {
+      const response = await axios.get('http://localhost:4000/api/blog/all-blogs');
+      setBlogs(response.data.blogs);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching blogs:', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBlogs();
+  }, []);
+
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
@@ -36,12 +56,8 @@ const Dashboard = () => {
       >
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Typography variant="h6" noWrap component="div">
-            Dashboard
+            User Dashboard
           </Typography>
-          <Box display="flex" alignItems="center" gap={2}>
-            <Avatar src="https://i.pravatar.cc/40" />
-            <Typography variant="subtitle1">Admin</Typography>
-          </Box>
         </Toolbar>
       </AppBar>
 
@@ -56,7 +72,7 @@ const Dashboard = () => {
       >
         <Toolbar>
           <Typography variant="h5" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
-            BlogAdmin
+            PostSphere
           </Typography>
         </Toolbar>
         <Divider />
@@ -77,12 +93,6 @@ const Dashboard = () => {
             <ListItemButton component={Link} to="/add-post">
               <ListItemIcon><AddCircleOutlineIcon color="primary" /></ListItemIcon>
               <ListItemText primary="Add Post" />
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton component={Link} to="/settings">
-              <ListItemIcon><SettingsIcon color="primary" /></ListItemIcon>
-              <ListItemText primary="Settings" />
             </ListItemButton>
           </ListItem>
         </List>
@@ -115,21 +125,29 @@ const Dashboard = () => {
           </Grid>
         </Grid>
 
-        {/* Recent Posts */}
+        {/* Blogs Section */}
         <Paper elevation={3} sx={{ p: 3 }}>
-          <Typography variant="h6" mb={2}>Recent Posts</Typography>
-          <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
-            {[
-              { title: 'How to build a MERN stack blog 🚀', date: '2 days ago' },
-              { title: 'Top 10 React Tricks 🔥', date: '5 days ago' },
-              { title: 'SEO Optimization for Blogs 🌟', date: '1 week ago' },
-            ].map((post, index) => (
-              <Box key={index} component="li" display="flex" justifyContent="space-between" py={2} borderBottom={index !== 2 ? 1 : 0} borderColor="divider">
-                <Typography>{post.title}</Typography>
-                <Typography color="textSecondary" variant="body2">{post.date}</Typography>
-              </Box>
-            ))}
-          </Box>
+          <Typography variant="h6" mb={2}>Recent Blogs</Typography>
+          {loading ? (
+            <CircularProgress />
+          ) : blogs.length === 0 ? (
+            <Typography variant="body1">No blogs found.</Typography>
+          ) : (
+            <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
+              {blogs.map((blog) => (
+                <Box key={blog._id} component="li" display="flex" justifyContent="space-between" py={2} borderBottom={1} borderColor="divider">
+                  <Box>
+                    <Typography variant="h6">{blog.title}</Typography>
+                    <Typography variant="body2" color="textSecondary">{blog.category}</Typography>
+                    <Typography variant="body2" color="textSecondary">{blog.createdAt}</Typography>
+                  </Box>
+                  <Link to={`/posts/${blog.blogId}`}>
+                    <Typography variant="body2" color="primary">View Post</Typography>
+                  </Link>
+                </Box>
+              ))}
+            </Box>
+          )}
         </Paper>
       </Box>
     </Box>
