@@ -18,13 +18,16 @@ const ManageUsers = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch users from the server
-  const fetchUsers = async () => {
+  const fetchUsers = async (query = '') => {
     const token = localStorage.getItem('adminToken');
     try {
+      setLoading(true);
       const res = await axios.get(`${DEV_URL}/admin/users`, {
         headers: {
           Authorization: `Bearer ${token}`,
+        },
+        params: {
+          search: query,
         },
       });
       setUsers(res.data.users || []);
@@ -36,10 +39,9 @@ const ManageUsers = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    fetchUsers(searchQuery);
+  }, [searchQuery]);
 
-  // Handle user deletion
   const handleDelete = async (userId) => {
     const token = localStorage.getItem('adminToken');
     const isConfirmed = window.confirm('Are you sure you want to delete this user?');
@@ -59,11 +61,6 @@ const ManageUsers = () => {
     }
   };
 
-  // Filter users based on search query
-  const filteredUsers = users.filter((user) =>
-    user.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
     <Box sx={{ p: 3 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
@@ -77,10 +74,10 @@ const ManageUsers = () => {
       </Stack>
       {loading ? (
         <CircularProgress />
-      ) : filteredUsers.length === 0 ? (
+      ) : users.length === 0 ? (
         <Typography>No users found.</Typography>
       ) : (
-        filteredUsers.map((user) => (
+        users.map((user) => (
           <Paper key={user._id} elevation={2} sx={{ p: 2, mb: 2 }}>
             <Typography variant="h6">{user.username}</Typography>
             <Typography>Email: {user.email}</Typography>
