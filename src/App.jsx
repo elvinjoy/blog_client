@@ -19,11 +19,12 @@ import AllBlogsAdmin from "./Pages/allBlogsAdmin";
 import EditBlogsByAdmin from './Pages/editBlogsByAdmin';
 import SpecificPost from './Pages/specificPost';
 import ManageCategories from './Pages/manageCategories';
+import Comments from './Pages/comments';
 
 function App() {
   return (
     <Router>
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer position="top-right" autoClose={4000} />
       <Routes>
         {/* User Dashboard Route */}
         <Route path="/" element={<Dashboard />} />
@@ -50,6 +51,10 @@ function App() {
         <Route path="/specificpost/:id" element={<SpecificPost />} />
         <Route path="/allcategories" element={<ManageCategories />} />
 
+        {/* Comments Route */}  
+        <Route path="/comments/:blogid" element={<Comments />} />
+
+        {/* Redirect to Dashboard for unknown routes */}
         {/* Catch all unknown routes */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

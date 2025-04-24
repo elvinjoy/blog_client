@@ -1,27 +1,20 @@
 import React, { useState } from 'react';
-import {
-  Box,
-  TextField,
-  Button,
-  Typography,
-  Paper,
-} from '@mui/material';
+import { Box, TextField, Button, Typography, Paper } from '@mui/material';
 
 const Comments = () => {
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState([
-    { username: 'Alice', comment: 'Great post!' },
-    { username: 'Bob', comment: 'Very informative.' },
+    { username: 'Jane Doe', text: 'Great post!' },
+    { username: 'John Smith', text: 'Very informative, thanks!' },
   ]);
 
   const handleCommentChange = (e) => setComment(e.target.value);
 
   const handleCommentSubmit = () => {
-    if (!comment) return;
-
-    const newComment = { username: 'CurrentUser', comment };
-    setComments([...comments, newComment]);
-    setComment('');
+    if (comment.trim()) {
+      setComments([...comments, { username: 'You', text: comment }]);
+      setComment('');
+    }
   };
 
   return (
@@ -40,12 +33,12 @@ const Comments = () => {
           Comments
         </Typography>
         <Box sx={{ maxHeight: 400, overflowY: 'auto', mb: 2 }}>
-          {comments.map((c, index) => (
+          {comments.map((comment, index) => (
             <Box key={index} sx={{ mb: 2 }}>
               <Typography variant="body2" color="textSecondary">
-                {c.username}
+                {comment.username}
               </Typography>
-              <Typography variant="body1">{c.comment}</Typography>
+              <Typography variant="body1">{comment.text}</Typography>
             </Box>
           ))}
         </Box>
