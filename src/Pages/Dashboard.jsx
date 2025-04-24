@@ -23,13 +23,18 @@ import {
   Select,
   FormControl,
   InputLabel,
+  Badge,
+  Tooltip,
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ArticleIcon from '@mui/icons-material/Article';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
+import CommentIcon from '@mui/icons-material/Comment';
 import DEV_URL from '../Constants/Constants';
 import { useNavigate } from 'react-router-dom';
-
+import { toast } from 'react-toastify';
 
 const drawerWidth = 240;
 
@@ -42,6 +47,8 @@ const Dashboard = () => {
   const [sort, setSort] = useState('latest');
   const [categories, setCategories] = useState([]);
   const [filterCategory, setFilterCategory] = useState('');
+  const [likedBlogs, setLikedBlogs] = useState({});
+  const [likesLoading, setLikesLoading] = useState({});
   const limit = 6;
   const navigate = useNavigate();
 
@@ -67,9 +74,38 @@ const Dashboard = () => {
       setBlogs(response.data.blogs);
       setTotalPages(Math.ceil(response.data.totalBlogs / limit));
       setLoading(false);
+      
+      // Check user's liked status for each blog
+      const token = localStorage.getItem('token');
+      if (token) {
+        checkUserLikes(response.data.blogs);
+      }
     } catch (error) {
       console.error('Error fetching blogs:', error);
       setLoading(false);
+    }
+  };
+
+  // Check which blogs the current user has liked
+  const checkUserLikes = async (blogsList) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await axios.get(`${DEV_URL}/blog/user-likes`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const userLikedBlogIds = response.data.likedBlogs || [];
+      const likedStatus = {};
+      
+      blogsList.forEach(blog => {
+        likedStatus[blog.blogId] = userLikedBlogIds.includes(blog.blogId);
+      });
+      
+      setLikedBlogs(likedStatus);
+    } catch (error) {
+      console.error('Error checking user likes:', error);
     }
   };
 
@@ -83,11 +119,55 @@ const Dashboard = () => {
 
   const handleComment = (blogId) => {
     navigate(`/comments/${blogId}`);
-  };  
+  };
   
-  const handleLike = (blogId) => {
-    // Handle like functionality (placeholder)
-    console.log(`Liked blog: ${blogId}`);
+  const handleLike = async (blogId) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error('You must be logged in to like a blog');
+      return;
+    }
+
+    try {
+      // Set loading state for this specific blog
+      setLikesLoading(prev => ({ ...prev, [blogId]: true }));
+      
+      // Toggle like status
+      const action = likedBlogs[blogId] ? 'unlike' : 'like';
+      
+      // Call API to like/unlike the blog
+      await axios.post(
+        `${DEV_URL}/blog/${action}/${blogId}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      
+      // Update local state
+      setLikedBlogs(prev => ({
+        ...prev,
+        [blogId]: !prev[blogId]
+      }));
+      
+      // Update the likes count in the blogs array
+      setBlogs(blogs.map(blog => {
+        if (blog.blogId === blogId) {
+          return {
+            ...blog,
+            likesCount: action === 'like' 
+              ? (blog.likesCount || 0) + 1 
+              : Math.max((blog.likesCount || 0) - 1, 0)
+          };
+        }
+        return blog;
+      }));
+      
+      toast.success(action === 'like' ? 'Blog liked!' : 'Blog unliked');
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      toast.error(error.response?.data?.message || 'Failed to process like');
+    } finally {
+      setLikesLoading(prev => ({ ...prev, [blogId]: false }));
+    }
   };
 
   return (
@@ -181,6 +261,7 @@ const Dashboard = () => {
               <MenuItem value="latest">Latest</MenuItem>
               <MenuItem value="atoz">A - Z</MenuItem>
               <MenuItem value="ztoa">Z - A</MenuItem>
+              <MenuItem value="mostLiked">Most Liked</MenuItem>
             </Select>
           </FormControl>
           <FormControl sx={{ minWidth: 150 }}>
@@ -203,7 +284,9 @@ const Dashboard = () => {
         <Paper elevation={3} sx={{ p: 3 }}>
           <Typography variant="h6" mb={2}>Recent Blogs</Typography>
           {loading ? (
-            <CircularProgress />
+            <Box display="flex" justifyContent="center" my={3}>
+              <CircularProgress />
+            </Box>
           ) : blogs.length === 0 ? (
             <Typography variant="body1">No blogs found.</Typography>
           ) : (
@@ -222,33 +305,51 @@ const Dashboard = () => {
                   >
                     <Box>
                       <Typography variant="h6">{blog.title}</Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        {blog.category}
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        {blog.blogId}
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        {new Date(blog.createdAt).toLocaleDateString()}
-                      </Typography>
+                      <Box display="flex" alignItems="center" gap={2} mt={1}>
+                        <Tooltip title="Likes">
+                          <Badge 
+                            badgeContent={blog.likesCount || 0} 
+                            color="primary"
+                            sx={{ mr: 1 }}
+                          >
+                            <ThumbUpOutlinedIcon fontSize="small" color="action" />
+                          </Badge>
+                        </Tooltip>
+                        <Typography variant="body2" color="textSecondary">
+                          {blog.category}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          {blog.blogId}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          {new Date(blog.createdAt).toLocaleDateString()}
+                        </Typography>
+                      </Box>
                     </Box>
                     <Box display="flex" alignItems="center" gap={2}>
                       <Link to={`/specificpost/${blog.blogId}`}>
-                        <Typography variant="body2" color="primary">
+                        <Button variant="text" size="small">
                           View Post
-                        </Typography>
+                        </Button>
                       </Link>
                       <Button
                         variant="outlined"
+                        color={likedBlogs[blog.blogId] ? "primary" : "inherit"}
                         size="small"
-                        onClick={() => handleLike(blog._id)}
+                        onClick={() => handleLike(blog.blogId)}
+                        startIcon={likesLoading[blog.blogId] ? 
+                          <CircularProgress size={16} /> : 
+                          (likedBlogs[blog.blogId] ? <ThumbUpIcon /> : <ThumbUpOutlinedIcon />)
+                        }
+                        disabled={likesLoading[blog.blogId]}
                       >
-                        Like
+                        {blog.likesCount || 0}
                       </Button>
                       <Button
                         variant="outlined"
                         size="small"
                         onClick={() => handleComment(blog.blogId)}
+                        startIcon={<CommentIcon />}
                       >
                         Comment
                       </Button>
