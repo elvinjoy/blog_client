@@ -17,23 +17,27 @@ import {
   Paper,
   Grid,
   CircularProgress,
+  Button,
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ArticleIcon from '@mui/icons-material/Article';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import SettingsIcon from '@mui/icons-material/Settings';
+import DEV_URL from '../Constants/Constants';
 
 const drawerWidth = 240;
 
 const Dashboard = () => {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 6;
 
-  // Fetch blogs from the API
   const fetchBlogs = async () => {
     try {
-      const response = await axios.get('http://localhost:4000/api/blog/all-blogs');
+      const response = await axios.get(`${DEV_URL}/blog/all-blogs?page=${page}`);
       setBlogs(response.data.blogs);
+      setTotalPages(Math.ceil(response.data.totalBlogs / limit));
       setLoading(false);
     } catch (error) {
       console.error('Error fetching blogs:', error);
@@ -43,13 +47,11 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchBlogs();
-  }, []);
+  }, [page]);
 
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-
-      {/* AppBar */}
       <AppBar
         position="fixed"
         sx={{ width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px`, bgcolor: 'primary.main' }}
@@ -61,7 +63,6 @@ const Dashboard = () => {
         </Toolbar>
       </AppBar>
 
-      {/* Sidebar */}
       <Drawer
         variant="permanent"
         sx={{
@@ -98,12 +99,7 @@ const Dashboard = () => {
         </List>
       </Drawer>
 
-      {/* Main Content */}
-      <Box
-        component="main"
-        sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3, mt: 8 }}
-      >
-        {/* Stats */}
+      <Box component="main" sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3, mt: 8 }}>
         <Grid container spacing={3} mb={4}>
           <Grid item xs={12} md={4}>
             <Paper elevation={3} sx={{ p: 3 }}>
@@ -125,7 +121,6 @@ const Dashboard = () => {
           </Grid>
         </Grid>
 
-        {/* Blogs Section */}
         <Paper elevation={3} sx={{ p: 3 }}>
           <Typography variant="h6" mb={2}>Recent Blogs</Typography>
           {loading ? (
@@ -133,20 +128,35 @@ const Dashboard = () => {
           ) : blogs.length === 0 ? (
             <Typography variant="body1">No blogs found.</Typography>
           ) : (
-            <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
-              {blogs.map((blog) => (
-                <Box key={blog._id} component="li" display="flex" justifyContent="space-between" py={2} borderBottom={1} borderColor="divider">
-                  <Box>
-                    <Typography variant="h6">{blog.title}</Typography>
-                    <Typography variant="body2" color="textSecondary">{blog.category}</Typography>
-                    <Typography variant="body2" color="textSecondary">{blog.createdAt}</Typography>
+            <>
+              <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
+                {blogs.map((blog) => (
+                  <Box key={blog._id} component="li" display="flex" justifyContent="space-between" py={2} borderBottom={1} borderColor="divider">
+                    <Box>
+                      <Typography variant="h6">{blog.title}</Typography>
+                      <Typography variant="body2" color="textSecondary">{blog.category}</Typography>
+                      <Typography variant="body2" color="textSecondary">{new Date(blog.createdAt).toLocaleDateString()}</Typography>
+                    </Box>
+                    <Link to={`/specificpost/${blog.blogId}`}>
+                      <Typography variant="body2" color="primary">View Post</Typography>
+                    </Link>
                   </Box>
-                  <Link to={`/posts/${blog.blogId}`}>
-                    <Typography variant="body2" color="primary">View Post</Typography>
-                  </Link>
+                ))}
+              </Box>
+
+              {/* Pagination Controls */}
+              <Box mt={3} display="flex" justifyContent="space-between">
+                <Typography variant="body2">Page {page} of {totalPages}</Typography>
+                <Box>
+                  <Button variant="outlined" onClick={() => setPage(prev => prev - 1)} disabled={page === 1} sx={{ mr: 2 }}>
+                    Previous
+                  </Button>
+                  <Button variant="outlined" onClick={() => setPage(prev => prev + 1)} disabled={page === totalPages}>
+                    Next
+                  </Button>
                 </Box>
-              ))}
-            </Box>
+              </Box>
+            </>
           )}
         </Paper>
       </Box>
