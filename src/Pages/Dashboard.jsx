@@ -20,6 +20,9 @@ import {
   Button,
   TextField,
   MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -33,34 +36,32 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [sortOrder, setSortOrder] = useState('latest');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('latest');
+  const [categories, setCategories] = useState([]);
+  const [filterCategory, setFilterCategory] = useState('');
   const limit = 6;
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get(`${DEV_URL}/users/categories`);
+      setCategories(response.data.categories);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
 
   const fetchBlogs = async () => {
     try {
-      const response = await axios.get(`${DEV_URL}/blog/all-blogs?page=${page}`);
-      let fetchedBlogs = response.data.blogs;
-
-      // Filter by search term
-      if (searchTerm) {
-        fetchedBlogs = fetchedBlogs.filter((blog) =>
-          blog.title.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      }
-
-      // Sort based on selected order
-      if (sortOrder === 'latest') {
-        fetchedBlogs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      } else if (sortOrder === 'oldest') {
-        fetchedBlogs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-      } else if (sortOrder === 'az') {
-        fetchedBlogs.sort((a, b) => a.title.localeCompare(b.title));
-      } else if (sortOrder === 'za') {
-        fetchedBlogs.sort((a, b) => b.title.localeCompare(a.title));
-      }
-
-      setBlogs(fetchedBlogs);
+      const response = await axios.get(`${DEV_URL}/blog/all-blogs`, {
+        params: {
+          page,
+          search,
+          sort,
+          category: filterCategory,
+        },
+      });
+      setBlogs(response.data.blogs);
       setTotalPages(Math.ceil(response.data.totalBlogs / limit));
       setLoading(false);
     } catch (error) {
@@ -70,8 +71,12 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
     fetchBlogs();
-  }, [page, sortOrder, searchTerm]);
+  }, [page, search, sort, filterCategory]);
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -124,8 +129,7 @@ const Dashboard = () => {
       </Drawer>
 
       <Box component="main" sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3, mt: 8 }}>
-        {/* Stats */}
-        <Grid container spacing={3} mb={4}>
+        <Grid container spacing={2} mb={4}>
           <Grid item xs={12} md={4}>
             <Paper elevation={3} sx={{ p: 3 }}>
               <Typography color="textSecondary" variant="subtitle2">Total Posts</Typography>
@@ -147,33 +151,41 @@ const Dashboard = () => {
         </Grid>
 
         {/* Filters */}
-        <Box display="flex" justifyContent="space-between" mb={2}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <TextField
             label="Search by title"
             variant="outlined"
-            size="small"
-            value={searchTerm}
-            onChange={(e) => {
-              setPage(1);
-              setSearchTerm(e.target.value);
-            }}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            sx={{ width: '40%' }}
           />
-          <TextField
-            select
-            label="Sort by"
-            size="small"
-            value={sortOrder}
-            onChange={(e) => {
-              setPage(1);
-              setSortOrder(e.target.value);
-            }}
-            sx={{ ml: 2 }}
-          >
-            <MenuItem value="latest">Latest</MenuItem>
-            <MenuItem value="oldest">Oldest</MenuItem>
-            <MenuItem value="az">A - Z</MenuItem>
-            <MenuItem value="za">Z - A</MenuItem>
-          </TextField>
+          <FormControl sx={{ minWidth: 150 }}>
+            <InputLabel>Sort By</InputLabel>
+            <Select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              label="Sort By"
+            >
+              <MenuItem value="latest">Latest</MenuItem>
+              <MenuItem value="atoz">A - Z</MenuItem>
+              <MenuItem value="ztoa">Z - A</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl sx={{ minWidth: 150 }}>
+            <InputLabel>Category</InputLabel>
+            <Select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              label="Category"
+            >
+              <MenuItem value="">All</MenuItem>
+              {categories.map((cat) => (
+                <MenuItem key={cat._id} value={cat.name}>
+                  {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
 
         <Paper elevation={3} sx={{ p: 3 }}>
@@ -199,7 +211,6 @@ const Dashboard = () => {
                 ))}
               </Box>
 
-              {/* Pagination Controls */}
               <Box mt={3} display="flex" justifyContent="space-between">
                 <Typography variant="body2">Page {page} of {totalPages}</Typography>
                 <Box>
