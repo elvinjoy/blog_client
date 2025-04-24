@@ -18,6 +18,8 @@ import {
   Grid,
   CircularProgress,
   Button,
+  TextField,
+  MenuItem,
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -31,12 +33,34 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [sortOrder, setSortOrder] = useState('latest');
+  const [searchTerm, setSearchTerm] = useState('');
   const limit = 6;
 
   const fetchBlogs = async () => {
     try {
       const response = await axios.get(`${DEV_URL}/blog/all-blogs?page=${page}`);
-      setBlogs(response.data.blogs);
+      let fetchedBlogs = response.data.blogs;
+
+      // Filter by search term
+      if (searchTerm) {
+        fetchedBlogs = fetchedBlogs.filter((blog) =>
+          blog.title.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+
+      // Sort based on selected order
+      if (sortOrder === 'latest') {
+        fetchedBlogs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      } else if (sortOrder === 'oldest') {
+        fetchedBlogs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      } else if (sortOrder === 'az') {
+        fetchedBlogs.sort((a, b) => a.title.localeCompare(b.title));
+      } else if (sortOrder === 'za') {
+        fetchedBlogs.sort((a, b) => b.title.localeCompare(a.title));
+      }
+
+      setBlogs(fetchedBlogs);
       setTotalPages(Math.ceil(response.data.totalBlogs / limit));
       setLoading(false);
     } catch (error) {
@@ -47,7 +71,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchBlogs();
-  }, [page]);
+  }, [page, sortOrder, searchTerm]);
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -100,6 +124,7 @@ const Dashboard = () => {
       </Drawer>
 
       <Box component="main" sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3, mt: 8 }}>
+        {/* Stats */}
         <Grid container spacing={3} mb={4}>
           <Grid item xs={12} md={4}>
             <Paper elevation={3} sx={{ p: 3 }}>
@@ -120,6 +145,36 @@ const Dashboard = () => {
             </Paper>
           </Grid>
         </Grid>
+
+        {/* Filters */}
+        <Box display="flex" justifyContent="space-between" mb={2}>
+          <TextField
+            label="Search by title"
+            variant="outlined"
+            size="small"
+            value={searchTerm}
+            onChange={(e) => {
+              setPage(1);
+              setSearchTerm(e.target.value);
+            }}
+          />
+          <TextField
+            select
+            label="Sort by"
+            size="small"
+            value={sortOrder}
+            onChange={(e) => {
+              setPage(1);
+              setSortOrder(e.target.value);
+            }}
+            sx={{ ml: 2 }}
+          >
+            <MenuItem value="latest">Latest</MenuItem>
+            <MenuItem value="oldest">Oldest</MenuItem>
+            <MenuItem value="az">A - Z</MenuItem>
+            <MenuItem value="za">Z - A</MenuItem>
+          </TextField>
+        </Box>
 
         <Paper elevation={3} sx={{ p: 3 }}>
           <Typography variant="h6" mb={2}>Recent Blogs</Typography>
