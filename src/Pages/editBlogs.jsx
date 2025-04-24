@@ -34,10 +34,10 @@ const EditBlogs = () => {
     useEffect(() => {
         const fetchBlogAndCategories = async () => {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('adminToken');
                 if (!token) {
                     toast.error('You must be logged in!');
-                    navigate('/login');
+                    navigate('/admindashboard');
                     return;
                 }
 

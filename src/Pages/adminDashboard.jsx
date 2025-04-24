@@ -119,7 +119,7 @@ const AdminDashboard = () => {
                         <Paper key={blog._id} elevation={3} sx={{ p: 2, mb: 2 }}>
                             <Typography variant="h6">{blog.title}</Typography>
                             <Typography variant="body2" color="text.secondary" mb={1}>
-                                By: {blog.author?.username || 'Unknown'}
+                                By: {blog.author?.username || 'Admin'}
                             </Typography>
                             <Typography variant="body1">{blog.content}</Typography>
                         </Paper>
