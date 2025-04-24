@@ -16,6 +16,7 @@ import {
     Paper,
     CircularProgress
 } from '@mui/material';
+import CategoryIcon from '@mui/icons-material/Category';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SupervisedUserCircleIcon from '@mui/icons-material/SupervisedUserCircle';
@@ -93,6 +94,13 @@ const AdminDashboard = () => {
                             <ListItemText primary="Manage Blogs" />
                         </ListItemButton>
                     </ListItem>
+                    <ListItem disablePadding>
+                        <ListItemButton onClick={() => navigate('/allcategories')}>
+                            <ListItemIcon><CategoryIcon color="secondary" /></ListItemIcon>
+                            <ListItemText primary="Manage Categories" />
+                        </ListItemButton>
+                    </ListItem>
+
                 </List>
             </Drawer>
 

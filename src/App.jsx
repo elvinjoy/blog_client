@@ -18,6 +18,7 @@ import ManageUsers from "./Pages/manageUsers";
 import AllBlogsAdmin from "./Pages/allBlogsAdmin";
 import EditBlogsByAdmin from './Pages/editBlogsByAdmin';
 import SpecificPost from './Pages/specificPost';
+import ManageCategories from './Pages/manageCategories';
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
         <Route path="/allblogsadmin" element={<AllBlogsAdmin />} />
         <Route path="/editblogsbyadmin/:id" element={<EditBlogsByAdmin />} />
         <Route path="/specificpost/:id" element={<SpecificPost />} />
+        <Route path="/allcategories" element={<ManageCategories />} />
 
         {/* Catch all unknown routes */}
         <Route path="*" element={<Navigate to="/" />} />
