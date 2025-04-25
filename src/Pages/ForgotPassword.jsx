@@ -61,7 +61,7 @@ const ForgotPassword = () => {
     }
     try {
       setLoading(true);
-      await axios.post(
+      await axios.patch(
         `${DEV_URL}/users/reset-password`,
         {
           email,

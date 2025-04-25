@@ -56,7 +56,6 @@ function App() {
         <Route path="/comments/:blogid" element={<Comments />} />
         <Route path="/add-categories" element={<AddCategories />} />
 
-        {/* Redirect to Dashboard for unknown routes */}
         {/* Catch all unknown routes */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
