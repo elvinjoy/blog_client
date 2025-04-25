@@ -19,22 +19,19 @@ import {
   DialogTitle,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import DEV_URL from '../Constants/Constants';
 import { toast } from 'react-toastify';
 
 // Utility function to extract blog ID from URL
 const extractBlogIdFromUrl = (url) => {
-  // Split the URL by '/' and get the last segment
   const segments = url.split('/');
   return segments[segments.length - 1];
 };
 
 const Comments = () => {
-  // Get blogId from URL params using React Router's useParams
   const params = useParams();
   const location = useLocation();
-  
-  // Try to get blogId from params first, if not available, extract from URL
   const urlBlogId = extractBlogIdFromUrl(window.location.href);
   const blogId = params.blogId || urlBlogId;
   
@@ -47,9 +44,9 @@ const Comments = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [editingComment, setEditingComment] = useState(null); // State to hold the comment being edited
   
   useEffect(() => {
-    // Get current user info from token
     const token = localStorage.getItem('token');
     if (token) {
       try {
@@ -59,7 +56,7 @@ const Comments = () => {
         console.error('Error decoding token:', error);
       }
     }
-    
+
     if (blogId) {
       console.log("Using blog ID:", blogId);
       fetchComments();
@@ -79,7 +76,7 @@ const Comments = () => {
       toast.error("Failed to load blog details");
     }
   };
-  
+
   const fetchComments = async () => {
     try {
       setLoading(true);
@@ -109,14 +106,12 @@ const Comments = () => {
     try {
       setSubmitting(true);
       
-      // Get token and extract user info
       const token = localStorage.getItem('token');
       if (!token) {
         toast.error('You must be logged in to comment');
         return;
       }
       
-      // Updated endpoint to match backend structure and send blogId in the body
       const response = await axios.post(
         `${DEV_URL}/comments/addcomment/${blogId}`,
         { 
@@ -126,14 +121,10 @@ const Comments = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      // Update comments list with the new comment
       setComments([...comments, response.data]);
       setComment('');
       toast.success('Comment posted successfully');
-      
-      // Optionally refresh comments to ensure we have the latest data
       fetchComments();
-      
     } catch (error) {
       console.error('Error posting comment:', error);
       toast.error(error.response?.data?.message || 'Failed to post comment');
@@ -142,19 +133,53 @@ const Comments = () => {
     }
   };
 
-  // Open delete confirmation dialog
+  const handleEditClick = (comment) => {
+    setEditingComment(comment);
+    setComment(comment.content); // Set the content of the comment into the input field
+  };
+
+  const handleEditSubmit = async () => {
+    if (!comment.trim()) {
+      toast.warning('Please enter a comment');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('You must be logged in to edit comments');
+        return;
+      }
+      
+      const response = await axios.put(
+        `${DEV_URL}/comments/update/${editingComment._id}`,
+        { content: comment },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Update the edited comment in the comments array
+      setComments(
+        comments.map(c => (c._id === editingComment._id ? { ...c, content: comment } : c))
+      );
+      setComment('');
+      setEditingComment(null); // Reset editing state
+      toast.success('Comment updated successfully');
+    } catch (error) {
+      console.error('Error updating comment:', error);
+      toast.error(error.response?.data?.message || 'Failed to update comment');
+    }
+  };
+
   const handleDeleteClick = (comment) => {
     setCommentToDelete(comment);
     setDeleteDialogOpen(true);
   };
 
-  // Close delete dialog
   const handleDeleteCancel = () => {
     setDeleteDialogOpen(false);
     setCommentToDelete(null);
   };
 
-  // Proceed with deletion
   const handleDeleteConfirm = async () => {
     if (!commentToDelete) return;
     
@@ -166,16 +191,12 @@ const Comments = () => {
         return;
       }
 
-      // Send delete request to the backend using your API endpoint
       await axios.delete(`${DEV_URL}/comments/delete/${commentToDelete._id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Update local state to remove the deleted comment
       setComments(comments.filter(c => c._id !== commentToDelete._id));
       toast.success('Comment deleted successfully');
-      
-      // Close the dialog
       setDeleteDialogOpen(false);
       setCommentToDelete(null);
     } catch (error) {
@@ -187,21 +208,15 @@ const Comments = () => {
     }
   };
 
-  // Check if user can delete a comment (owner or admin)
   const canDeleteComment = (comment) => {
     if (!currentUser) return false;
-    
-    // User can delete if they're an admin or the comment owner
-    return (
-      currentUser.role === 'admin' || 
-      currentUser.userNumber === comment.userNumber
-    );
+    return currentUser.role === 'admin' || currentUser.userNumber === comment.userNumber;
   };
-  
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString();
   };
-  
+
   return (
     <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
       <Typography variant="h5" gutterBottom>
@@ -232,17 +247,30 @@ const Comments = () => {
                       </Typography>
                     </Box>
                   </Box>
-                  
-                  {canDeleteComment(comment) && (
-                    <IconButton 
-                      size="small" 
-                      color="error" 
-                      onClick={() => handleDeleteClick(comment)}
-                      aria-label="delete comment"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  )}
+
+                  <Box>
+                    {canDeleteComment(comment) && (
+                      <IconButton 
+                        size="small" 
+                        color="error" 
+                        onClick={() => handleDeleteClick(comment)}
+                        aria-label="delete comment"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    )}
+
+                    {canDeleteComment(comment) && (
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => handleEditClick(comment)}
+                        aria-label="edit comment"
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    )}
+                  </Box>
                 </Box>
                 <Typography variant="body1">{comment.content}</Typography>
               </Box>
@@ -259,50 +287,54 @@ const Comments = () => {
               multiline
               rows={3}
               variant="outlined"
-              placeholder="Write a comment..."
+              label="Write a comment..."
               value={comment}
               onChange={handleCommentChange}
               disabled={submitting}
             />
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleCommentSubmit}
-              disabled={submitting || !comment.trim()}
-              sx={{ mt: 2 }}
-            >
-              {submitting ? <CircularProgress size={24} /> : 'Post Comment'}
-            </Button>
+            <Box mt={2} display="flex" justifyContent="space-between">
+              {editingComment ? (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleEditSubmit}
+                  disabled={submitting}
+                >
+                  {submitting ? 'Updating...' : 'Update Comment'}
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleCommentSubmit}
+                  disabled={submitting}
+                >
+                  {submitting ? 'Posting...' : 'Post Comment'}
+                </Button>
+              )}
+            </Box>
           </Box>
         </>
       )}
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={handleDeleteCancel}
-        aria-labelledby="delete-dialog-title"
-        aria-describedby="delete-dialog-description"
-      >
-        <DialogTitle id="delete-dialog-title">
-          Delete Comment
-        </DialogTitle>
+      {/* Delete confirmation dialog */}
+      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
+        <DialogTitle>Delete Comment</DialogTitle>
         <DialogContent>
-          <DialogContentText id="delete-dialog-description">
+          <DialogContentText>
             Are you sure you want to delete this comment? This action cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleDeleteCancel} disabled={deleting}>
+          <Button onClick={handleDeleteCancel} color="primary">
             Cancel
           </Button>
-          <Button 
-            onClick={handleDeleteConfirm} 
-            color="error" 
-            autoFocus
+          <Button
+            onClick={handleDeleteConfirm}
+            color="secondary"
             disabled={deleting}
           >
-            {deleting ? <CircularProgress size={24} /> : 'Delete'}
+            {deleting ? 'Deleting...' : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>
