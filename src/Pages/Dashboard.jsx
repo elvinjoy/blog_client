@@ -74,7 +74,7 @@ const Dashboard = () => {
       setBlogs(response.data.blogs);
       setTotalPages(Math.ceil(response.data.totalBlogs / limit));
       setLoading(false);
-      
+
       // Check user's liked status for each blog
       const token = localStorage.getItem('token');
       if (token) {
@@ -95,14 +95,14 @@ const Dashboard = () => {
       const response = await axios.get(`${DEV_URL}/blog/user-likes`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       const userLikedBlogIds = response.data.likedBlogs || [];
       const likedStatus = {};
-      
+
       blogsList.forEach(blog => {
         likedStatus[blog.blogId] = userLikedBlogIds.includes(blog.blogId);
       });
-      
+
       setLikedBlogs(likedStatus);
     } catch (error) {
       console.error('Error checking user likes:', error);
@@ -120,7 +120,7 @@ const Dashboard = () => {
   const handleComment = (blogId) => {
     navigate(`/comments/${blogId}`);
   };
-  
+
   const handleLike = async (blogId) => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -131,36 +131,36 @@ const Dashboard = () => {
     try {
       // Set loading state for this specific blog
       setLikesLoading(prev => ({ ...prev, [blogId]: true }));
-      
+
       // Toggle like status
       const action = likedBlogs[blogId] ? 'unlike' : 'like';
-      
+
       // Call API to like/unlike the blog
       await axios.post(
         `${DEV_URL}/blog/${action}/${blogId}`,
         {},
-        { headers: { Authorization: `Bearer ${token}` }}
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
       // Update local state
       setLikedBlogs(prev => ({
         ...prev,
         [blogId]: !prev[blogId]
       }));
-      
+
       // Update the likes count in the blogs array
       setBlogs(blogs.map(blog => {
         if (blog.blogId === blogId) {
           return {
             ...blog,
-            likesCount: action === 'like' 
-              ? (blog.likesCount || 0) + 1 
+            likesCount: action === 'like'
+              ? (blog.likesCount || 0) + 1
               : Math.max((blog.likesCount || 0) - 1, 0)
           };
         }
         return blog;
       }));
-      
+
       toast.success(action === 'like' ? 'Blog liked!' : 'Blog unliked');
     } catch (error) {
       console.error('Error toggling like:', error);
@@ -307,8 +307,8 @@ const Dashboard = () => {
                       <Typography variant="h6">{blog.title}</Typography>
                       <Box display="flex" alignItems="center" gap={2} mt={1}>
                         <Tooltip title="Likes">
-                          <Badge 
-                            badgeContent={blog.likesCount || 0} 
+                          <Badge
+                            badgeContent={blog.likesCount || 0}
                             color="primary"
                             sx={{ mr: 1 }}
                           >
@@ -322,7 +322,12 @@ const Dashboard = () => {
                           {blog.blogId}
                         </Typography>
                         <Typography variant="body2" color="textSecondary">
-                          {new Date(blog.createdAt).toLocaleDateString()}
+                          {new Date(blog.createdAt).toLocaleDateString('en-US', {
+                            day: 'numeric',
+                            weekday: 'short',
+                            month: 'long',
+                            year: 'numeric',
+                          })}
                         </Typography>
                       </Box>
                     </Box>
@@ -337,8 +342,8 @@ const Dashboard = () => {
                         color={likedBlogs[blog.blogId] ? "primary" : "inherit"}
                         size="small"
                         onClick={() => handleLike(blog.blogId)}
-                        startIcon={likesLoading[blog.blogId] ? 
-                          <CircularProgress size={16} /> : 
+                        startIcon={likesLoading[blog.blogId] ?
+                          <CircularProgress size={16} /> :
                           (likedBlogs[blog.blogId] ? <ThumbUpIcon /> : <ThumbUpOutlinedIcon />)
                         }
                         disabled={likesLoading[blog.blogId]}
