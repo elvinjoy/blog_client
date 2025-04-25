@@ -11,9 +11,12 @@ import {
   Typography,
   Container,
   Paper,
-  CircularProgress
+  CircularProgress,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import DEV_URL from '../Constants/Constants';
 
 const Login = () => {
@@ -76,9 +79,27 @@ const Login = () => {
     }
   };
 
+  // Navigate to admin login
+  const goToAdminLogin = () => {
+    navigate('/adminlogin');
+  };
+
   return (
     <Container component="main" maxWidth="xs">
-      <Paper elevation={3} sx={{ mt: 8, p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Paper elevation={3} sx={{ mt: 8, p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+        {/* Admin login button in top right corner */}
+        <Box sx={{ position: 'absolute', top: 10, right: 10 }}>
+          <Tooltip title="Admin Login">
+            <IconButton 
+              color="primary" 
+              onClick={goToAdminLogin}
+              aria-label="Admin Login"
+            >
+              <AdminPanelSettingsIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
+        
         <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
           <LockOutlinedIcon />
         </Avatar>

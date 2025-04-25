@@ -32,6 +32,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
 import CommentIcon from '@mui/icons-material/Comment';
+import LoginIcon from '@mui/icons-material/Login';
 import DEV_URL from '../Constants/Constants';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -49,8 +50,26 @@ const Dashboard = () => {
   const [filterCategory, setFilterCategory] = useState('');
   const [likedBlogs, setLikedBlogs] = useState({});
   const [likesLoading, setLikesLoading] = useState({});
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const limit = 6;
   const navigate = useNavigate();
+
+  // Check if user is logged in
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setIsLoggedIn(false);
+    toast.success('Logged out successfully');
+    navigate('/login');
+  };
+
+  const handleLogin = () => {
+    navigate('/login');
+  };
 
   const fetchCategories = async () => {
     try {
@@ -181,6 +200,23 @@ const Dashboard = () => {
           <Typography variant="h6" noWrap component="div">
             User Dashboard
           </Typography>
+          {isLoggedIn ? (
+            <Button 
+              color="inherit" 
+              onClick={handleLogout}
+              startIcon={<LoginIcon />}
+            >
+              Logout
+            </Button>
+          ) : (
+            <Button 
+              color="inherit" 
+              onClick={handleLogin}
+              startIcon={<LoginIcon />}
+            >
+              Login
+            </Button>
+          )}
         </Toolbar>
       </AppBar>
 
