@@ -17,8 +17,10 @@ const ManageUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchUsers = async (query = '') => {
+  const fetchUsers = async (query = '', page = 1) => {
     const token = localStorage.getItem('adminToken');
     try {
       setLoading(true);
@@ -28,9 +30,13 @@ const ManageUsers = () => {
         },
         params: {
           search: query,
+          page,
+          limit: 5,
         },
       });
       setUsers(res.data.users || []);
+      setCurrentPage(res.data.currentPage || 1);
+      setTotalPages(res.data.totalPages || 1);
     } catch (err) {
       console.error('Failed to fetch users:', err);
     } finally {
@@ -39,8 +45,8 @@ const ManageUsers = () => {
   };
 
   useEffect(() => {
-    fetchUsers(searchQuery);
-  }, [searchQuery]);
+    fetchUsers(searchQuery, currentPage);
+  }, [searchQuery, currentPage]);
 
   const handleDelete = async (userId) => {
     const token = localStorage.getItem('adminToken');
@@ -55,10 +61,16 @@ const ManageUsers = () => {
       });
       setUsers(users.filter((user) => user.userNumber !== userId));
       toast.success('User deleted successfully!');
+      fetchUsers(searchQuery, currentPage); // refetch updated list
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to delete user');
       console.error('Error deleting user:', err);
     }
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1); // reset page when search changes
   };
 
   return (
@@ -69,9 +81,10 @@ const ManageUsers = () => {
           label="Search Users"
           variant="outlined"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={handleSearchChange}
         />
       </Stack>
+
       {loading ? (
         <CircularProgress />
       ) : users.length === 0 ? (
@@ -93,6 +106,30 @@ const ManageUsers = () => {
           </Paper>
         ))
       )}
+
+      {/* Pagination Controls */}
+      {users.length > 0 && (
+        <Stack direction="row" spacing={2} mt={3} alignItems="center">
+          <Button
+            variant="contained"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((prev) => prev - 1)}
+          >
+            Previous
+          </Button>
+          <Typography>
+            Page {currentPage} of {totalPages}
+          </Typography>
+          <Button
+            variant="contained"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((prev) => prev + 1)}
+          >
+            Next
+          </Button>
+        </Stack>
+      )}
+
       <ToastContainer />
     </Box>
   );
