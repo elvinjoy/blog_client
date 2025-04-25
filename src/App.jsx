@@ -20,6 +20,7 @@ import EditBlogsByAdmin from './Pages/editBlogsByAdmin';
 import SpecificPost from './Pages/specificPost';
 import ManageCategories from './Pages/manageCategories';
 import Comments from './Pages/comments';
+import AddCategories from './Pages/addCategories';
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
 
         {/* Comments Route */}  
         <Route path="/comments/:blogid" element={<Comments />} />
+        <Route path="/add-categories" element={<AddCategories />} />
 
         {/* Redirect to Dashboard for unknown routes */}
         {/* Catch all unknown routes */}

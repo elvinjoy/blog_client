@@ -95,9 +95,9 @@ const AdminDashboard = () => {
                         </ListItemButton>
                     </ListItem>
                     <ListItem disablePadding>
-                        <ListItemButton onClick={() => navigate('/add-post')}>
+                        <ListItemButton onClick={() => navigate('/add-categories')}>
                             <ListItemIcon><CategoryIcon color="secondary" /></ListItemIcon>
-                            <ListItemText primary="add-post" />
+                            <ListItemText primary="add-Categories" />
                         </ListItemButton>
                     </ListItem>
                     <ListItem disablePadding>
