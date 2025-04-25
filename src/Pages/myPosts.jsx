@@ -148,13 +148,13 @@ const AllPostsByMe = () => {
                                 )}
                                 <Grid item xs={12}>
                                     <Typography variant="h6" mb={1}>
-                                        {post.title}
+                                    Title: {post.title}
                                     </Typography>
                                     <Typography variant="body2" color="textSecondary" mb={2}>
                                         Published: {new Date(post.createdAt).toLocaleDateString()}
                                     </Typography>
                                     <Typography variant="body2" mb={2}>
-                                        {post.description}
+                                       Description: {post.description}
                                     </Typography>
                                     <Button
                                         size="small"
@@ -165,7 +165,7 @@ const AllPostsByMe = () => {
                                     >
                                         Edit
                                     </Button>
-                                    <Button
+                                    {/* <Button
                                         size="small"
                                         variant="outlined"
                                         color="secondary"
@@ -173,7 +173,7 @@ const AllPostsByMe = () => {
                                         to={`/blog/${post.blogId}`}
                                     >
                                         View Full Post
-                                    </Button>
+                                    </Button> */}
                                 </Grid>
                             </Grid>
                         </Paper>
